@@ -603,8 +603,17 @@ var teamsById = {};
     btn.textContent = '結果の取り消し';
   }
 
+  // Mirrors Code.gs's retractTeam_: clears the given match's team1_id/team2_id
+  // slot, used for the optimistic client-side update.
+  function optimisticRetract_(nextMatchId, slot) {
+    var m = matchesById[nextMatchId];
+    if (!m) return;
+    if (String(slot) === '1') m.team1_id = ''; else m.team2_id = '';
+  }
+
   function submitClearResult() {
     if (!currentMatchId) return;
+    var matchId = currentMatchId;
     var btn = document.getElementById('clear-result-btn');
 
     if (!btn.dataset.confirming) {
@@ -614,10 +623,30 @@ var teamsById = {};
       clearConfirmTimer = setTimeout(function () { resetClearResultButton_(); }, 4000);
       return;
     }
-
     resetClearResultButton_();
-    apiPost_('clearResult', { matchId: currentMatchId })
-      .then(function (data) { renderAll(data); showToast('結果を取り消しました'); closeModal(); })
+
+    // Same check as Code.gs's assertNextMatchNotDecided_: refuse to clear if
+    // the match(es) this one feeds into are already decided, since retracting
+    // the team here would leave that later result pointing at a team that
+    // never actually qualified.
+    var m = matchesById[matchId];
+    var blockedBy = [m.next_match_id, m.loser_next_match_id].filter(function (id) {
+      return id && matchesById[id] && matchesById[id].winner_id;
+    })[0];
+    if (blockedBy) {
+      showToast('進出先の試合（' + blockedBy + '）の結果が既に入力されているため取り消せません。先にそちらの結果を取り消してください。', true);
+      return;
+    }
+
+    Object.assign(m, { score1: '', score2: '', winner_id: '', status: '', win_type: '' });
+    if (m.next_match_id) optimisticRetract_(m.next_match_id, m.next_slot);
+    if (m.loser_next_match_id) optimisticRetract_(m.loser_next_match_id, m.loser_next_slot);
+    renderAll({ teams: Object.values(teamsById), matches: matchList });
+    showToast('結果を取り消しました');
+    closeModal();
+
+    apiPost_('clearResult', { matchId: matchId })
+      .then(function (data) { renderAll(data); })
       .catch(handleError);
   }
 
