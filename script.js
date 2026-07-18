@@ -685,6 +685,10 @@ var teamsById = {};
 
   function onIconModalFileSelected(event) {
     var file = event.target.files && event.target.files[0];
+    // TEMPORARY DIAGNOSTIC - remove once the upload issue is confirmed fixed.
+    showToast('DEBUG files=' + (event.target.files ? event.target.files.length : 'null') +
+      ' team=' + currentIconTeamId +
+      (file ? (' name=' + file.name + ' size=' + file.size + ' type=' + file.type) : ' NO FILE'), true);
     event.target.value = ''; // allow re-selecting the same file later
     if (!file) return;
     var teamId = currentIconTeamId;
