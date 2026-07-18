@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="style.css?v=5">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <div class="app-shell">
@@ -18,7 +19,6 @@
     </header>
 
     <div class="mobile-toolbar" id="mobile-toolbar">
-      <button class="toolbar-btn" id="view-toggle-btn" onclick="toggleMobileView()">📋 一覧表示</button>
       <div class="zoom-controls" id="zoom-controls">
         <button class="toolbar-btn zoom-btn" onclick="zoomOut()" aria-label="縮小">－</button>
         <span id="zoom-level-label" class="zoom-label">100%</span>
@@ -34,18 +34,6 @@
         </div>
       </div>
     </main>
-
-    <div id="mobile-view" class="mobile-view">
-      <nav class="round-tabs">
-        <button class="round-tab" onclick="scrollToRound('R16')">ラウンド16</button>
-        <button class="round-tab" onclick="scrollToRound('QF')">準々決勝</button>
-        <button class="round-tab" onclick="scrollToRound('SF')">準決勝</button>
-        <button class="round-tab" onclick="scrollToRound('FINAL')">決勝・3位</button>
-      </nav>
-      <div id="mobile-match-container">
-        <div class="loading">読み込み中...</div>
-      </div>
-    </div>
   </div>
 
   <div id="toast" class="toast" hidden></div>
@@ -124,6 +112,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>

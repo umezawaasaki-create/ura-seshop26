@@ -275,7 +275,7 @@
   }
 
   .final-label-img {
-    height: 18px;
+    height: 32px;
     width: auto;
     display: inline-block;
     vertical-align: middle;
@@ -571,12 +571,8 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Mobile round-list view                                              */
+  /* Mobile toolbar (zoom controls for the rotated bracket)               */
   /* ------------------------------------------------------------------ */
-
-  .mobile-view {
-    display: none;
-  }
 
   .mobile-toolbar {
     display: none;
@@ -584,7 +580,7 @@
     top: 0;
     z-index: 60;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
     padding: 8px 12px;
     background: rgba(30, 9, 9, 0.94);
@@ -628,76 +624,12 @@
     text-align: center;
   }
 
-  body.mobile-list-mode .zoom-controls {
-    visibility: hidden;
-  }
-
   #bracket-scale-wrap {
     transform-origin: top left;
   }
 
   #bracket {
     transform-origin: top left;
-  }
-
-  .round-tabs {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 10px 14px;
-    background: rgba(30, 9, 9, 0.94);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .round-tab {
-    flex: none;
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 999px;
-    padding: 9px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
-  .round-tab:active {
-    background: var(--accent);
-    color: #2b0e0e;
-    border-color: var(--accent);
-  }
-
-  .mobile-round-section {
-    padding: 20px 14px 4px;
-    scroll-margin-top: 56px;
-  }
-
-  .mobile-round-heading {
-    color: var(--accent);
-    font-size: 14px;
-    letter-spacing: 0.12em;
-    margin: 0 0 12px;
-    text-align: center;
-  }
-
-  .mobile-match-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-
-  .mobile-trophy {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 4px 0 14px;
   }
 
   @media (max-width: 760px) {
@@ -739,21 +671,29 @@
       display: flex;
     }
 
-    /* Default mobile view: the full bracket graph, zoomed to fit the screen.
-       Tapping the toolbar's "一覧表示" button switches to the round list instead. */
-    body.mobile-list-mode .bracket-wrap {
-      display: none;
-    }
-
-    body.mobile-list-mode .mobile-view {
-      display: block;
-    }
-
     .bracket-wrap {
       overflow: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x pan-y;
       padding: 8px;
+    }
+
+    /* The whole bracket rotates 90deg to fill the portrait screen instead of
+       running off the side (see applyMobileZoom_ in script.js). Rotating
+       about the center - rather than the desktop default of top-left - means
+       the swapped-dimension scale-wrap box doesn't need extra translation to
+       stay centered; flex centering here handles that. Each card/label/the
+       trophy gets an inline -90deg counter-rotation from script.js so its own
+       content stays upright even though its position follows the rotation. */
+    #bracket-scale-wrap {
+      transform-origin: center center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #bracket {
+      transform-origin: center center;
     }
 
     /* Larger tap targets and type once the layout switches to the list view */

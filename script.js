@@ -51,13 +51,6 @@ var teamsById = {};
     R16: 'ラウンド16', QF: '準々決勝', SF: '準決勝', F: '決勝', '3RD': '3位決定戦'
   };
 
-  var ROUND_SECTIONS = [
-    { key: 'R16', label: 'ラウンド16', ids: ['R16-1', 'R16-2', 'R16-3', 'R16-4', 'R16-5', 'R16-6', 'R16-7', 'R16-8'] },
-    { key: 'QF', label: '準々決勝', ids: ['QF-1', 'QF-2', 'QF-3', 'QF-4'] },
-    { key: 'SF', label: '準決勝', ids: ['SF-1', 'SF-2'] },
-    { key: 'FINAL', label: '決勝・3位決定戦', ids: ['F', '3RD'] }
-  ];
-
   var AUTO_REFRESH_INTERVAL_MS = 20000;
 
   window.onload = function () {
@@ -100,7 +93,6 @@ var teamsById = {};
     matchList.forEach(function (m) { matchesById[m.match_id] = m; });
 
     renderColumns();
-    renderMobileList();
     requestAnimationFrame(function () {
       syncMobileBracketLayout_();
       drawConnectors();
@@ -117,24 +109,6 @@ var teamsById = {};
 
   function isMobileLayout() {
     return window.innerWidth <= 760;
-  }
-
-  function toggleMobileView() {
-    document.body.classList.toggle('mobile-list-mode');
-    var listMode = document.body.classList.contains('mobile-list-mode');
-    document.getElementById('view-toggle-btn').textContent = listMode ? '🔲 全体表示' : '📋 一覧表示';
-
-    if (!listMode) {
-      requestAnimationFrame(function () {
-        sizeBracketWrapForMobile_();
-        if (userZoomedManually) {
-          applyMobileZoom_(mobileZoom);
-        } else {
-          fitBracketToScreen();
-        }
-        drawConnectors();
-      });
-    }
   }
 
   function sizeBracketWrapForMobile_() {
@@ -164,7 +138,15 @@ var teamsById = {};
       return;
     }
 
-    if (!userZoomedManually) fitBracketToScreen();
+    // Re-apply the current zoom/rotation to the freshly rendered cards even
+    // when the user picked their own zoom level - renderColumns() rebuilds
+    // every .match-card from scratch each refresh, which wipes the inline
+    // counter-rotation style those elements carry on mobile.
+    if (userZoomedManually) {
+      applyMobileZoom_(mobileZoom);
+    } else {
+      fitBracketToScreen();
+    }
   }
 
   /**
@@ -181,6 +163,7 @@ var teamsById = {};
     var scaleWrap = document.getElementById('bracket-scale-wrap');
     if (!wrap || !bracket || !scaleWrap) return;
 
+    setCounterRotation_(false);
     measureNaturalBracketSize_();
     if (!naturalBracketSize.width) return;
 
@@ -206,15 +189,38 @@ var teamsById = {};
     naturalBracketSize = { width: bracket.offsetWidth, height: bracket.offsetHeight };
   }
 
+  /**
+   * Rotating the whole bracket 90deg would rotate every label/badge/logo
+   * with it, sideways and unreadable. Counter-rotating each card/label/the
+   * center trophy by -90deg cancels that back out for their own content -
+   * net rotation zero, so they render upright - while their position still
+   * follows wherever the bracket's own rotation placed them. The connector
+   * lines are not counter-rotated: they're meant to visually follow the
+   * rotated layout.
+   */
+  function setCounterRotation_(on) {
+    var els = document.querySelectorAll('.match-card, .round-label, .center-deco');
+    els.forEach(function (el) { el.style.transform = on ? 'rotate(-90deg)' : ''; });
+  }
+
   function applyMobileZoom_(scale) {
     if (!naturalBracketSize) measureNaturalBracketSize_();
     mobileZoom = Math.max(0.15, Math.min(1.5, scale));
 
     var bracket = document.getElementById('bracket');
     var scaleWrap = document.getElementById('bracket-scale-wrap');
-    bracket.style.transform = 'scale(' + mobileZoom + ')';
-    scaleWrap.style.width = (naturalBracketSize.width * mobileZoom) + 'px';
-    scaleWrap.style.height = (naturalBracketSize.height * mobileZoom) + 'px';
+
+    if (isMobileLayout()) {
+      bracket.style.transform = 'rotate(90deg) scale(' + mobileZoom + ')';
+      scaleWrap.style.width = (naturalBracketSize.height * mobileZoom) + 'px';
+      scaleWrap.style.height = (naturalBracketSize.width * mobileZoom) + 'px';
+      setCounterRotation_(true);
+    } else {
+      bracket.style.transform = 'scale(' + mobileZoom + ')';
+      scaleWrap.style.width = (naturalBracketSize.width * mobileZoom) + 'px';
+      scaleWrap.style.height = (naturalBracketSize.height * mobileZoom) + 'px';
+      setCounterRotation_(false);
+    }
 
     var label = document.getElementById('zoom-level-label');
     if (label) label.textContent = Math.round(mobileZoom * 100) + '%';
@@ -237,6 +243,12 @@ var teamsById = {};
     if (wrap) { wrap.scrollLeft = 0; wrap.scrollTop = 0; }
   }
 
+  /**
+   * The bracket is rotated 90deg on mobile (see applyMobileZoom_), so its
+   * natural width ends up running along the screen's vertical axis and its
+   * natural height along the horizontal one - swapped from the normal,
+   * unrotated fit calculation.
+   */
   function fitBracketToScreen() {
     if (!isMobileLayout()) return;
     measureNaturalBracketSize_();
@@ -247,34 +259,8 @@ var teamsById = {};
     var availH = wrap.clientHeight - 16;
     if (availW <= 0 || availH <= 0) return;
 
-    var fit = Math.min(availW / naturalBracketSize.width, availH / naturalBracketSize.height, 1);
+    var fit = Math.min(availW / naturalBracketSize.height, availH / naturalBracketSize.width, 1);
     applyMobileZoom_(fit);
-  }
-
-  function renderMobileList() {
-    var container = document.getElementById('mobile-match-container');
-    if (!container) return;
-
-    var html = '';
-    ROUND_SECTIONS.forEach(function (section) {
-      html += '<section class="mobile-round-section" id="mobile-round-' + section.key + '">';
-      html += '<h2 class="mobile-round-heading">' + escapeHtml(section.label) + '</h2>';
-      if (section.key === 'FINAL') {
-        html += '<div class="mobile-trophy">' + trophyHtml() + '</div>';
-      }
-      html += '<div class="mobile-match-list">';
-      section.ids.forEach(function (id) {
-        html += matchCardHtml(matchesById[id]);
-      });
-      html += '</div></section>';
-    });
-
-    container.innerHTML = html;
-  }
-
-  function scrollToRound(key) {
-    var el = document.getElementById('mobile-round-' + key);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function renderColumns() {
@@ -395,6 +381,18 @@ var teamsById = {};
     var prevTransform = bracketEl.style.transform;
     bracketEl.style.transform = 'none';
 
+    // Cards/labels/the trophy carry their own -90deg counter-rotation on
+    // mobile (see setCounterRotation_) so they read upright inside the
+    // rotated bracket. Neutralize those too while measuring, otherwise their
+    // measured boxes would reflect a stray -90deg (parent rotation gone,
+    // child's counter-rotation still active) instead of the true layout.
+    var cardEls = document.querySelectorAll('.match-card, .round-label, .center-deco');
+    var prevCardTransforms = [];
+    cardEls.forEach(function (el) {
+      prevCardTransforms.push(el.style.transform);
+      el.style.transform = 'none';
+    });
+
     var bracketRect = bracketEl.getBoundingClientRect();
     svg.setAttribute('width', bracketRect.width);
     svg.setAttribute('height', bracketRect.height);
@@ -416,6 +414,7 @@ var teamsById = {};
     pending.forEach(function (c) { drawConnector(svg, bracketRect, c.source, c.target, c.dashed, c.decided); });
 
     bracketEl.style.transform = prevTransform;
+    cardEls.forEach(function (el, i) { el.style.transform = prevCardTransforms[i]; });
   }
 
   function drawConnector(svg, bracketRect, sourceId, targetId, dashed, decided) {
