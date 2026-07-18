@@ -285,7 +285,7 @@ var teamsById = {};
       if (col.side === 'center') {
         html += '<div class="col-outer center">';
         html += '<div class="bracket-col center">';
-        html += '<div><div class="round-label">FINAL</div>' + matchCardHtml(matchesById['F']) + '</div>';
+        html += '<div><div class="round-label"><img class="final-label-img" src="final.svg" alt="FINAL"></div>' + matchCardHtml(matchesById['F']) + '</div>';
         html += '<div class="center-deco">' + trophyHtml() + '</div>';
         html += '<div><div class="round-label">3位決定戦</div>' + matchCardHtml(matchesById['3RD']) + '</div>';
         html += '</div></div>';
