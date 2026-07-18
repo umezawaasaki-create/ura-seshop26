@@ -695,21 +695,49 @@ var teamsById = {};
       return;
     }
 
-    var reader = new FileReader();
-    reader.onload = function () {
-      showToast('アップロード中...');
-      apiPost_('uploadTeamLogo', { teamId: teamId, dataUrl: reader.result, fileName: file.name })
-        .then(function (data) {
-          renderAll(data);
-          refreshIconModalAndMenu_(teamId);
-          showToast('アイコンを変更しました');
-        })
-        .catch(handleError);
-    };
-    reader.onerror = function () {
-      showToast('画像の読み込みに失敗しました', true);
-    };
-    reader.readAsDataURL(file);
+    showToast('アップロード中...');
+    normalizeImageToJpeg_(file)
+      .then(function (dataUrl) {
+        return apiPost_('uploadTeamLogo', { teamId: teamId, dataUrl: dataUrl, fileName: file.name.replace(/\.[^.]+$/, '') + '.jpg' });
+      })
+      .then(function (data) {
+        renderAll(data);
+        refreshIconModalAndMenu_(teamId);
+        showToast('アイコンを変更しました');
+      })
+      .catch(handleError);
+  }
+
+  /**
+   * Re-encodes the picked image as a JPEG via canvas before uploading.
+   * Picking a photo from the Photos library gets iOS's automatic HEIC ->
+   * JPEG conversion for web uploads, but picking the same photo through a
+   * document provider like Google Drive skips that conversion - the raw
+   * HEIC file gets handed to us instead, and HEIC doesn't render in a plain
+   * <img> tag (shows as a broken image). Drawing to a canvas and exporting
+   * as JPEG guarantees the stored file is always web-renderable regardless
+   * of source or original format.
+   */
+  function normalizeImageToJpeg_(file) {
+    return new Promise(function (resolve, reject) {
+      var objectUrl = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(objectUrl);
+        var maxSize = 800;
+        var scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('画像を読み込めませんでした。別の画像でお試しください。'));
+      };
+      img.src = objectUrl;
+    });
   }
 
   function resetCurrentTeamIcon() {
