@@ -651,10 +651,15 @@
        instead of min-height, so cards don't look scattered/inconsistent
        depending on how much schedule info is filled in - overflow: hidden
        is just a safety net, nothing should actually need clipping. */
+    /* Narrower than its column (210px/180px) and centered in it - the slack
+       this opens up around each card is what actually keeps adjacent rounds
+       from crowding each other once the bracket is rotated 90deg. */
     .match-card {
+      width: 175px;
       height: 186px;
       padding: 16px 14px;
       gap: 6px;
+      margin: 0 auto;
       overflow: hidden;
     }
 
@@ -678,6 +683,7 @@
 
     .team-name {
       font-size: 16px;
+      line-height: 1.05;
     }
 
     .team-score {

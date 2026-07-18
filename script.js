@@ -304,9 +304,16 @@ var teamsById = {};
     return '' +
       '<div class="team-row ' + (isWinner ? 'is-winner' : '') + ' ' + (isLoser ? 'is-loser' : '') + '">' +
       badgeHtml(team) +
-      '<span class="team-name">' + escapeHtml(team.name) + '</span>' +
+      '<span class="team-name">' + teamNameHtml_(team.name) + '</span>' +
       scoreHtml +
       '</div>';
+  }
+
+  // Combined team names like "二子玉川・瀬田" break onto a second line at the
+  // "・" instead of wrapping wherever happens to fit, which reads awkwardly
+  // in the narrow mobile cards.
+  function teamNameHtml_(name) {
+    return escapeHtml(name).replace(/・/g, '・<br>');
   }
 
   /**
