@@ -422,14 +422,21 @@ var teamsById = {};
     var ty = tRect.top + tRect.height / 2;
     var midX = (sx + tx) / 2;
 
-    var relSx = sx - bracketRect.left, relTx = tx - bracketRect.left, relMid = midX - bracketRect.left;
+    // The confirmed-winner line pushes past the card edge into the next
+    // match's shape, instead of just touching it, so the advancing path
+    // reads as "arriving into" that slot. The bend point (midX) stays put -
+    // only the final approach into the target lengthens.
+    var pierce = (!dashed && decided) ? 16 : 0;
+    var pierceTx = sourceIsLeftOfTarget ? (tx + pierce) : (tx - pierce);
+
+    var relSx = sx - bracketRect.left, relTx = pierceTx - bracketRect.left, relMid = midX - bracketRect.left;
     var relSy = sy - bracketRect.top, relTy = ty - bracketRect.top;
 
     // The winner's advancing line (solid, to next_match_id) turns red once
     // the match result is entered, so the confirmed path through the bracket
     // is easy to trace at a glance. The loser's line to the 3rd-place match
     // stays dashed regardless, since it represents a still-tentative slot.
-    var color = dashed ? '#c98f8f' : (decided ? '#e74c3c' : '#f1e9e2');
+    var color = dashed ? '#c98f8f' : (decided ? '#FF0002' : '#f1e9e2');
 
     var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M ' + relSx + ' ' + relSy + ' H ' + relMid + ' V ' + relTy + ' H ' + relTx);
@@ -437,6 +444,7 @@ var teamsById = {};
     path.setAttribute('stroke-width', (!dashed && decided) ? '6' : '5');
     path.setAttribute('fill', 'none');
     if (dashed) path.setAttribute('stroke-dasharray', '4,3');
+    if (!dashed && decided) path.style.filter = 'drop-shadow(0 0 4px rgba(255, 0, 2, 0.75))';
     svg.appendChild(path);
   }
 
