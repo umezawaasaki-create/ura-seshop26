@@ -401,14 +401,14 @@ var teamsById = {};
     svg.innerHTML = '';
 
     matchList.forEach(function (m) {
-      if (m.next_match_id) drawConnector(svg, bracketRect, m.match_id, m.next_match_id, false);
-      if (m.loser_next_match_id) drawConnector(svg, bracketRect, m.match_id, m.loser_next_match_id, true);
+      if (m.next_match_id) drawConnector(svg, bracketRect, m.match_id, m.next_match_id, false, !!m.winner_id);
+      if (m.loser_next_match_id) drawConnector(svg, bracketRect, m.match_id, m.loser_next_match_id, true, !!m.winner_id);
     });
 
     bracketEl.style.transform = prevTransform;
   }
 
-  function drawConnector(svg, bracketRect, sourceId, targetId, dashed) {
+  function drawConnector(svg, bracketRect, sourceId, targetId, dashed, decided) {
     var sourceEl = document.querySelector('.match-card[data-match-id="' + sourceId + '"]');
     var targetEl = document.querySelector('.match-card[data-match-id="' + targetId + '"]');
     if (!sourceEl || !targetEl) return;
@@ -425,10 +425,16 @@ var teamsById = {};
     var relSx = sx - bracketRect.left, relTx = tx - bracketRect.left, relMid = midX - bracketRect.left;
     var relSy = sy - bracketRect.top, relTy = ty - bracketRect.top;
 
+    // The winner's advancing line (solid, to next_match_id) turns red once
+    // the match result is entered, so the confirmed path through the bracket
+    // is easy to trace at a glance. The loser's line to the 3rd-place match
+    // stays dashed regardless, since it represents a still-tentative slot.
+    var color = dashed ? '#c98f8f' : (decided ? '#e74c3c' : '#f1e9e2');
+
     var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M ' + relSx + ' ' + relSy + ' H ' + relMid + ' V ' + relTy + ' H ' + relTx);
-    path.setAttribute('stroke', dashed ? '#c98f8f' : '#f1e9e2');
-    path.setAttribute('stroke-width', '5');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', (!dashed && decided) ? '6' : '5');
     path.setAttribute('fill', 'none');
     if (dashed) path.setAttribute('stroke-dasharray', '4,3');
     svg.appendChild(path);
