@@ -507,24 +507,72 @@ var teamsById = {};
       .catch(handleError);
   }
 
+  // Mirrors Code.gs's advanceTeam_: drops teamId into the given match's
+  // team1_id/team2_id slot, used for the optimistic client-side update.
+  function optimisticAdvance_(nextMatchId, slot, teamId) {
+    var m = matchesById[nextMatchId];
+    if (!m) return;
+    if (String(slot) === '1') m.team1_id = teamId; else m.team2_id = teamId;
+  }
+
+  function optimisticApplyResult_(matchId, winnerId, loserId, score1, score2, winType) {
+    var m = matchesById[matchId];
+    if (!m) return;
+    Object.assign(m, { score1: score1, score2: score2, winner_id: winnerId, status: 'completed', win_type: winType });
+    if (m.next_match_id) optimisticAdvance_(m.next_match_id, m.next_slot, winnerId);
+    if (m.loser_next_match_id) optimisticAdvance_(m.loser_next_match_id, m.loser_next_slot, loserId);
+    renderAll({ teams: Object.values(teamsById), matches: matchList });
+  }
+
   function submitResult() {
     if (!currentMatchId) return;
-    var s1 = document.getElementById('input-score1').value;
-    var s2 = document.getElementById('input-score2').value;
-    if (s1 === '' || s2 === '') {
+    var matchId = currentMatchId;
+    var s1raw = document.getElementById('input-score1').value;
+    var s2raw = document.getElementById('input-score2').value;
+    if (s1raw === '' || s2raw === '') {
       showToast('得点を入力してください', true);
       return;
     }
-    apiPost_('saveResult', { matchId: currentMatchId, score1: s1, score2: s2, winType: 'normal' })
-      .then(function (data) { renderAll(data); showToast('結果を保存しました'); closeModal(); })
+    var s1 = Number(s1raw), s2 = Number(s2raw);
+    if (isNaN(s1) || isNaN(s2)) {
+      showToast('得点は数値で入力してください', true);
+      return;
+    }
+    if (s1 === s2) {
+      showToast('同点は保存できません。勝敗が決まってから入力してください。', true);
+      return;
+    }
+
+    var m = matchesById[matchId];
+    var winnerId = (s1 > s2) ? m.team1_id : m.team2_id;
+    var loserId = (s1 > s2) ? m.team2_id : m.team1_id;
+
+    // Same instant-close treatment as submitSchedule: apply the winner
+    // advancement locally (mirroring the server's logic) and close right
+    // away, then reconcile with the real response in the background.
+    optimisticApplyResult_(matchId, winnerId, loserId, s1, s2, 'normal');
+    showToast('結果を保存しました');
+    closeModal();
+
+    apiPost_('saveResult', { matchId: matchId, score1: s1raw, score2: s2raw, winType: 'normal' })
+      .then(function (data) { renderAll(data); })
       .catch(handleError);
   }
 
   function submitFusen(slot) {
     if (!currentMatchId) return;
+    var matchId = currentMatchId;
     var winType = (slot === 1) ? 'fusen1' : 'fusen2';
-    apiPost_('saveResult', { matchId: currentMatchId, score1: '', score2: '', winType: winType })
-      .then(function (data) { renderAll(data); showToast('不戦勝を記録しました'); closeModal(); })
+    var m = matchesById[matchId];
+    var winnerId = (winType === 'fusen1') ? m.team1_id : m.team2_id;
+    var loserId = (winType === 'fusen1') ? m.team2_id : m.team1_id;
+
+    optimisticApplyResult_(matchId, winnerId, loserId, '', '', winType);
+    showToast('不戦勝を記録しました');
+    closeModal();
+
+    apiPost_('saveResult', { matchId: matchId, score1: '', score2: '', winType: winType })
+      .then(function (data) { renderAll(data); })
       .catch(handleError);
   }
 
