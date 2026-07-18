@@ -400,10 +400,20 @@ var teamsById = {};
     svg.setAttribute('height', bracketRect.height);
     svg.innerHTML = '';
 
+    // Two matches can converge on the same next-match slot from above and
+    // below, and their lines cross near that shared card. SVG paints later
+    // elements over earlier ones, so drawing strictly in match order lets an
+    // undecided line drawn after a confirmed one cut across it. Queue every
+    // connector first, then draw all plain lines, then all confirmed (red)
+    // ones last, so a red line always ends up on top regardless of which
+    // match it belongs to.
+    var pending = [];
     matchList.forEach(function (m) {
-      if (m.next_match_id) drawConnector(svg, bracketRect, m.match_id, m.next_match_id, false, !!m.winner_id);
-      if (m.loser_next_match_id) drawConnector(svg, bracketRect, m.match_id, m.loser_next_match_id, true, !!m.winner_id);
+      if (m.next_match_id) pending.push({ source: m.match_id, target: m.next_match_id, dashed: false, decided: !!m.winner_id });
+      if (m.loser_next_match_id) pending.push({ source: m.match_id, target: m.loser_next_match_id, dashed: true, decided: !!m.winner_id });
     });
+    pending.sort(function (a, b) { return (a.decided ? 1 : 0) - (b.decided ? 1 : 0); });
+    pending.forEach(function (c) { drawConnector(svg, bracketRect, c.source, c.target, c.dashed, c.decided); });
 
     bracketEl.style.transform = prevTransform;
   }
