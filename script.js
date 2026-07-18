@@ -482,11 +482,22 @@ var teamsById = {};
 
   function submitSchedule() {
     if (!currentMatchId) return;
+    var matchId = currentMatchId;
     var date = document.getElementById('input-date').value;
     var time = document.getElementById('input-time').value;
     var venue = document.getElementById('input-venue').value;
-    apiPost_('saveSchedule', { matchId: currentMatchId, date: date, time: time, venue: venue })
-      .then(function (data) { renderAll(data); showToast('日程を保存しました'); closeModal(); })
+
+    // Update the bracket from the values just typed instead of waiting on the
+    // network round trip, so the modal closes immediately; the real API call
+    // still runs in the background and reconciles the view once it resolves.
+    var m = matchesById[matchId];
+    if (m) Object.assign(m, { date: date, time: time, venue: venue });
+    renderAll({ teams: Object.values(teamsById), matches: matchList });
+    showToast('日程を保存しました');
+    closeModal();
+
+    apiPost_('saveSchedule', { matchId: matchId, date: date, time: time, venue: venue })
+      .then(function (data) { renderAll(data); })
       .catch(handleError);
   }
 
