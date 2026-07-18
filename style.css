@@ -264,10 +264,11 @@
 
   .round-label {
     text-align: center;
-    font-size: 11px;
+    font-size: 15px;
+    font-weight: 700;
     color: var(--accent);
     letter-spacing: 0.15em;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .loading {
