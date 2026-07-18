@@ -760,11 +760,17 @@ var teamsById = {};
   function resetCurrentTeamIcon() {
     var teamId = currentIconTeamId;
     if (!teamId) return;
+
+    var team = teamsById[teamId];
+    if (team) team.logo_url = '';
+    renderAll({ teams: Object.values(teamsById), matches: matchList });
+    refreshIconModalAndMenu_(teamId);
+    showToast('アイコンを元に戻しました');
+
     apiPost_('clearTeamLogo', { teamId: teamId })
       .then(function (data) {
         renderAll(data);
         refreshIconModalAndMenu_(teamId);
-        showToast('アイコンを元に戻しました');
       })
       .catch(handleError);
   }
