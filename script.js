@@ -720,23 +720,35 @@ var teamsById = {};
    */
   function normalizeImageToJpeg_(file) {
     return new Promise(function (resolve, reject) {
-      var objectUrl = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(objectUrl);
-        var maxSize = 800;
-        var scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
-        var canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.naturalWidth * scale);
-        canvas.height = Math.round(img.naturalHeight * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      // Read via FileReader into a data: URI (not URL.createObjectURL) -
+      // blob: URLs loaded into an Image have been unreliable in mobile
+      // Safari in the past; a data: URI is the same mechanism the original
+      // (working) upload path used.
+      var reader = new FileReader();
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var maxSize = 800;
+          var scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.naturalWidth * scale) || img.naturalWidth;
+          canvas.height = Math.round(img.naturalHeight * scale) || img.naturalHeight;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          try {
+            resolve(canvas.toDataURL('image/jpeg', 0.88));
+          } catch (e) {
+            reject(e);
+          }
+        };
+        img.onerror = function () {
+          reject(new Error('画像を読み込めませんでした。別の画像でお試しください。'));
+        };
+        img.src = reader.result;
       };
-      img.onerror = function () {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('画像を読み込めませんでした。別の画像でお試しください。'));
+      reader.onerror = function () {
+        reject(new Error('画像の読み込みに失敗しました'));
       };
-      img.src = objectUrl;
+      reader.readAsDataURL(file);
     });
   }
 
