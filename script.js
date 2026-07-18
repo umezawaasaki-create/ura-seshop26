@@ -695,15 +695,24 @@ var teamsById = {};
       return;
     }
 
-    showToast('アップロード中...');
     resizeImageForBadge_(file)
       .then(function (dataUrl) {
+        // Same instant-feedback treatment as the other save actions: apply
+        // the resized image locally and update the UI immediately instead
+        // of waiting on the network round trip (which also uploads a Drive
+        // backup copy server-side, adding real latency) - the actual save
+        // still happens right after, in the background.
+        var team = teamsById[teamId];
+        if (team) team.logo_url = dataUrl;
+        renderAll({ teams: Object.values(teamsById), matches: matchList });
+        refreshIconModalAndMenu_(teamId);
+        showToast('アイコンを変更しました');
+
         return apiPost_('uploadTeamLogo', { teamId: teamId, dataUrl: dataUrl, fileName: file.name });
       })
       .then(function (data) {
         renderAll(data);
         refreshIconModalAndMenu_(teamId);
-        showToast('アイコンを変更しました');
       })
       .catch(handleError);
   }
