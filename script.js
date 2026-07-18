@@ -685,10 +685,6 @@ var teamsById = {};
 
   function onIconModalFileSelected(event) {
     var file = event.target.files && event.target.files[0];
-    // TEMPORARY DIAGNOSTIC - remove once the upload issue is confirmed fixed.
-    showToast('DEBUG files=' + (event.target.files ? event.target.files.length : 'null') +
-      ' team=' + currentIconTeamId +
-      (file ? (' name=' + file.name + ' size=' + file.size + ' type=' + file.type) : ' NO FILE'), true);
     event.target.value = ''; // allow re-selecting the same file later
     if (!file) return;
     var teamId = currentIconTeamId;
@@ -699,21 +695,57 @@ var teamsById = {};
       return;
     }
 
-    var reader = new FileReader();
-    reader.onload = function () {
-      showToast('アップロード中...');
-      apiPost_('uploadTeamLogo', { teamId: teamId, dataUrl: reader.result, fileName: file.name })
-        .then(function (data) {
-          renderAll(data);
-          refreshIconModalAndMenu_(teamId);
-          showToast('アイコンを変更しました');
-        })
-        .catch(handleError);
-    };
-    reader.onerror = function () {
-      showToast('画像の読み込みに失敗しました', true);
-    };
-    reader.readAsDataURL(file);
+    showToast('アップロード中...');
+    resizeImageForBadge_(file)
+      .then(function (dataUrl) {
+        return apiPost_('uploadTeamLogo', { teamId: teamId, dataUrl: dataUrl, fileName: file.name });
+      })
+      .then(function (data) {
+        renderAll(data);
+        refreshIconModalAndMenu_(teamId);
+        showToast('アイコンを変更しました');
+      })
+      .catch(handleError);
+  }
+
+  /**
+   * Shrinks the picked image to a small square-ish JPEG data URI before
+   * uploading. This isn't about format compatibility - it's because
+   * uploadTeamLogo now stores the image data directly in the Teams sheet
+   * cell (see the comment in Code.gs for why: Google Drive's own share
+   * links don't reliably load in a plain <img> tag), and a sheet cell only
+   * holds ~50,000 characters. A badge is only ever shown at a few dozen
+   * pixels across, so shrinking well below the original resolution costs
+   * nothing visually.
+   */
+  function resizeImageForBadge_(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var maxSize = 240;
+          var scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.naturalWidth * scale) || img.naturalWidth;
+          canvas.height = Math.round(img.naturalHeight * scale) || img.naturalHeight;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          try {
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
+          } catch (e) {
+            reject(e);
+          }
+        };
+        img.onerror = function () {
+          reject(new Error('画像を読み込めませんでした。別の画像でお試しください。'));
+        };
+        img.src = reader.result;
+      };
+      reader.onerror = function () {
+        reject(new Error('画像の読み込みに失敗しました'));
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function resetCurrentTeamIcon() {
