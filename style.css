@@ -570,60 +570,6 @@
     margin-top: 10px;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Mobile toolbar (zoom controls for the rotated bracket)               */
-  /* ------------------------------------------------------------------ */
-
-  .mobile-toolbar {
-    display: none;
-    position: sticky;
-    top: 0;
-    z-index: 60;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(30, 9, 9, 0.94);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  .toolbar-btn {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .toolbar-btn:active {
-    background: var(--accent);
-    color: #2b0e0e;
-    border-color: var(--accent);
-  }
-
-  .zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .zoom-btn {
-    padding: 8px 12px;
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  .zoom-label {
-    color: #fff;
-    font-size: 12px;
-    min-width: 38px;
-    text-align: center;
-  }
-
   #bracket-scale-wrap {
     transform-origin: top left;
   }
@@ -667,8 +613,12 @@
       display: none;
     }
 
-    .mobile-toolbar {
-      display: flex;
+    /* Round headings ("ROUND 16", "準々決勝", ...) are dropped on mobile so
+       that space goes to the bracket itself instead - see the shrunk
+       .bracket height below, which is what actually drives the bigger
+       fit-to-screen scale in script.js's fitBracketToScreen(). */
+    .round-label {
+      display: none;
     }
 
     .bracket-wrap {
@@ -696,28 +646,45 @@
       transform-origin: center center;
     }
 
-    /* Larger tap targets and type once the layout switches to the list view */
+    /* Larger tap targets and type on mobile. Every card gets the same fixed
+       height (tall enough for the longest real case: date + time + venue)
+       instead of min-height, so cards don't look scattered/inconsistent
+       depending on how much schedule info is filled in - overflow: hidden
+       is just a safety net, nothing should actually need clipping. */
     .match-card {
-      min-height: 160px;
-      padding: 20px 16px;
+      height: 186px;
+      padding: 16px 14px;
+      gap: 6px;
+      overflow: hidden;
     }
 
-    .badge, .badge-img {
-      width: 64px;
-      height: 64px;
-      font-size: 22px;
+    /* Matches .match-card's fixed height x4 (the tallest column, Round 16)
+       plus modest gaps - replaces the desktop-tuned 900px so the rotated
+       fit-to-screen scale in script.js reflects this more compact mobile
+       layout instead of leftover desktop spacing (the round labels are gone
+       on mobile too, so nothing else needs that reserved space). */
+    .bracket {
+      height: 768px;
+    }
+
+    /* Scoped to cards only - badgeHtml() is shared with the team list/icon
+       modals, which should keep their own (larger) badge size. */
+    .match-card .badge, .match-card .badge-img {
+      width: 50px;
+      height: 50px;
+      font-size: 17px;
     }
 
     .team-name {
-      font-size: 19px;
+      font-size: 16px;
     }
 
     .team-score {
-      font-size: 18px;
+      font-size: 15px;
     }
 
     .meta-row {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .btn {

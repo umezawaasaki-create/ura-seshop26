@@ -104,7 +104,6 @@ var teamsById = {};
   // ---------------------------------------------------------------------
 
   var mobileZoom = 1;
-  var userZoomedManually = false;
   var naturalBracketSize = null;
 
   function isMobileLayout() {
@@ -125,28 +124,24 @@ var teamsById = {};
 
   /**
    * Keeps the bracket's mobile zoom/sizing in sync with the current viewport.
-   * On desktop widths this clears any leftover mobile transform/sizing (e.g.
-   * after rotating a device or resizing a browser window past the mobile
+   * There's no manual zoom control - it's always fit-to-screen. On desktop
+   * widths this clears any leftover mobile transform/sizing (e.g. after
+   * rotating a device or resizing a browser window past the mobile
    * breakpoint) so the graph renders at its normal, untransformed size.
    */
   function syncMobileBracketLayout_() {
     sizeBracketWrapForMobile_();
 
     if (!isMobileLayout()) {
-      userZoomedManually = false;
       fitBracketWidthToShell_();
       return;
     }
 
-    // Re-apply the current zoom/rotation to the freshly rendered cards even
-    // when the user picked their own zoom level - renderColumns() rebuilds
-    // every .match-card from scratch each refresh, which wipes the inline
-    // counter-rotation style those elements carry on mobile.
-    if (userZoomedManually) {
-      applyMobileZoom_(mobileZoom);
-    } else {
-      fitBracketToScreen();
-    }
+    // renderColumns() rebuilds every .match-card from scratch on each
+    // refresh, which wipes the inline counter-rotation style those elements
+    // carry on mobile - fitBracketToScreen() (via applyMobileZoom_) re-applies
+    // it every time alongside the fit-to-screen scale.
+    fitBracketToScreen();
   }
 
   /**
@@ -221,26 +216,6 @@ var teamsById = {};
       scaleWrap.style.height = (naturalBracketSize.height * mobileZoom) + 'px';
       setCounterRotation_(false);
     }
-
-    var label = document.getElementById('zoom-level-label');
-    if (label) label.textContent = Math.round(mobileZoom * 100) + '%';
-  }
-
-  function zoomIn() {
-    userZoomedManually = true;
-    applyMobileZoom_(mobileZoom + 0.15);
-  }
-
-  function zoomOut() {
-    userZoomedManually = true;
-    applyMobileZoom_(mobileZoom - 0.15);
-  }
-
-  function zoomReset() {
-    userZoomedManually = false;
-    fitBracketToScreen();
-    var wrap = document.getElementById('bracket-wrap');
-    if (wrap) { wrap.scrollLeft = 0; wrap.scrollTop = 0; }
   }
 
   /**
