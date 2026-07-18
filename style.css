@@ -156,8 +156,14 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    min-height: 150px;
-    justify-content: center;
+    /* Fixed (not min-) height, tall enough for the longest real case (date +
+       time + venue), and content top-aligned instead of centered - so every
+       card is the same size and shape regardless of how much schedule info
+       is filled in, with any unused space left blank at the bottom instead
+       of the whole card shrinking/growing and re-centering. */
+    height: 210px;
+    justify-content: flex-start;
+    overflow: hidden;
     transition: transform 0.1s ease;
     border: 2px solid transparent;
   }
