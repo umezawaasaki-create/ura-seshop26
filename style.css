@@ -659,12 +659,13 @@
     }
 
     /* Matches .match-card's fixed height x4 (the tallest column, Round 16)
-       plus modest gaps - replaces the desktop-tuned 900px so the rotated
-       fit-to-screen scale in script.js reflects this more compact mobile
-       layout instead of leftover desktop spacing (the round labels are gone
-       on mobile too, so nothing else needs that reserved space). */
+       plus a real safety margin for gaps between cards - replaces the
+       desktop-tuned 900px so the rotated fit-to-screen scale in script.js
+       reflects this more compact mobile layout instead of leftover desktop
+       spacing (the round labels are gone on mobile too, so nothing else
+       needs that reserved space). */
     .bracket {
-      height: 768px;
+      height: 820px;
     }
 
     /* Scoped to cards only - badgeHtml() is shared with the team list/icon

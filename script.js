@@ -220,9 +220,11 @@ var teamsById = {};
 
   /**
    * The bracket is rotated 90deg on mobile (see applyMobileZoom_), so its
-   * natural width ends up running along the screen's vertical axis and its
-   * natural height along the horizontal one - swapped from the normal,
-   * unrotated fit calculation.
+   * natural width ends up running along the screen's vertical (scrollable)
+   * axis and its natural height along the horizontal one. Scale is picked to
+   * fill the full screen width - not capped by available height too - since
+   * .bracket-wrap already scrolls vertically; capping by both would leave
+   * unused space on the sides whenever the height constraint was tighter.
    */
   function fitBracketToScreen() {
     if (!isMobileLayout()) return;
@@ -231,10 +233,9 @@ var teamsById = {};
     if (!wrap || !naturalBracketSize.width || !naturalBracketSize.height) return;
 
     var availW = wrap.clientWidth - 16;
-    var availH = wrap.clientHeight - 16;
-    if (availW <= 0 || availH <= 0) return;
+    if (availW <= 0) return;
 
-    var fit = Math.min(availW / naturalBracketSize.height, availH / naturalBracketSize.width, 1);
+    var fit = Math.min(availW / naturalBracketSize.height, 1);
     applyMobileZoom_(fit);
   }
 
