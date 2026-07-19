@@ -632,9 +632,15 @@
     /* Round headings ("ROUND 16", "準々決勝", ...) are dropped on mobile so
        that space goes to the bracket itself instead - see the shrunk
        .bracket height below, which is what actually drives the bigger
-       fit-to-screen scale in script.js's fitBracketToScreen(). */
+       fit-to-screen scale in script.js's fitBracketToScreen(). "FINAL" and
+       "3位決定戦" are the exception - they stay, next to the final/3rd-place
+       cards they each label. */
     .round-label {
       display: none;
+    }
+
+    .round-label.center-round-label {
+      display: block;
     }
 
     .bracket-wrap {
