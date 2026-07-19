@@ -633,14 +633,35 @@
        that space goes to the bracket itself instead - see the shrunk
        .bracket height below, which is what actually drives the bigger
        fit-to-screen scale in script.js's fitBracketToScreen(). "FINAL" and
-       "3位決定戦" are the exception - they stay, next to the final/3rd-place
-       cards they each label. */
+       "3位決定戦" are the exception - they stay, pinned to a top corner of
+       the final/3rd-place card they each label instead of overlapping it.
+       .center-slot (label + card together) is what actually gets the
+       counter-rotation on mobile (see setCounterRotation_ in script.js), so
+       the label's position here is plain, non-rotated top/left/right - it
+       rides along with the card as one rigid unit. */
     .round-label {
       display: none;
     }
 
+    .center-slot {
+      position: relative;
+    }
+
     .round-label.center-round-label {
       display: block;
+      position: absolute;
+      top: 4px;
+      font-size: 20px;
+      margin: 0;
+      z-index: 2;
+    }
+
+    .final-slot .center-round-label {
+      right: 6px;
+    }
+
+    .third-slot .center-round-label {
+      left: 6px;
     }
 
     .bracket-wrap {

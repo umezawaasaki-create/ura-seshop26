@@ -192,10 +192,21 @@ var teamsById = {};
    * follows wherever the bracket's own rotation placed them. The connector
    * lines are not counter-rotated: they're meant to visually follow the
    * rotated layout.
+   *
+   * The FINAL/3rd-place match cards are a special case: their "FINAL" /
+   * "3位決定戦" label is positioned via CSS absolute positioning pinned to a
+   * corner of the card (see .center-round-label), which only lines up
+   * correctly if the label and card rotate together as a single rigid unit
+   * (.center-slot) - counter-rotating that .match-card individually as well
+   * would rotate it a second time and point it the wrong way.
    */
   function setCounterRotation_(on) {
-    var els = document.querySelectorAll('.match-card, .round-label, .center-deco');
-    els.forEach(function (el) { el.style.transform = on ? 'rotate(-90deg)' : ''; });
+    var els = document.querySelectorAll('.match-card, .round-label, .center-deco, .center-slot');
+    els.forEach(function (el) {
+      if (el.classList.contains('match-card') && el.closest('.center-slot')) return;
+      if (el.classList.contains('round-label') && el.closest('.center-slot')) return;
+      el.style.transform = on ? 'rotate(-90deg)' : '';
+    });
   }
 
   function applyMobileZoom_(scale) {
@@ -247,9 +258,9 @@ var teamsById = {};
       if (col.side === 'center') {
         html += '<div class="col-outer center">';
         html += '<div class="bracket-col center">';
-        html += '<div><div class="round-label center-round-label"><img class="final-label-img" src="final.svg" alt="FINAL"></div>' + matchCardHtml(matchesById['F']) + '</div>';
+        html += '<div class="center-slot final-slot"><div class="round-label center-round-label"><img class="final-label-img" src="final.svg" alt="FINAL"></div>' + matchCardHtml(matchesById['F']) + '</div>';
         html += '<div class="center-deco">' + trophyHtml() + '</div>';
-        html += '<div><div class="round-label center-round-label">3位決定戦</div>' + matchCardHtml(matchesById['3RD']) + '</div>';
+        html += '<div class="center-slot third-slot"><div class="round-label center-round-label">3位決定戦</div>' + matchCardHtml(matchesById['3RD']) + '</div>';
         html += '</div></div>';
       } else {
         html += '<div class="col-outer">';
@@ -369,7 +380,7 @@ var teamsById = {};
     // rotated bracket. Neutralize those too while measuring, otherwise their
     // measured boxes would reflect a stray -90deg (parent rotation gone,
     // child's counter-rotation still active) instead of the true layout.
-    var cardEls = document.querySelectorAll('.match-card, .round-label, .center-deco');
+    var cardEls = document.querySelectorAll('.match-card, .round-label, .center-deco, .center-slot');
     var prevCardTransforms = [];
     cardEls.forEach(function (el) {
       prevCardTransforms.push(el.style.transform);
