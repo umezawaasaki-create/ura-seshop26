@@ -652,7 +652,7 @@
       position: absolute;
       /* Negative - above the card's own top edge, outside its box, sitting
          over the connector line in the gap toward the trophy. */
-      top: -30px;
+      top: -46px;
       font-size: 20px;
       margin: 0;
       z-index: 2;
@@ -664,6 +664,10 @@
 
     .third-slot .center-round-label {
       left: 6px;
+    }
+
+    .final-slot .final-label-img {
+      height: 64px;
     }
 
     .bracket-wrap {
